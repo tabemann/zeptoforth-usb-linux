@@ -10,7 +10,7 @@ Includes support for Windows hosts and client applications.
 
 * Install Zeptoforth full non-USB image to Pico first.
 
-* Use zeptocomjs to upload usb files in numerical order, rebooting between each upload.
+* Use [zeptocomjs](https://tabemann.github.io/zeptocomjs/zeptocom.html) to upload usb files in numerical order, rebooting between each upload.
 
 * Use file [`julia.fs`](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/upload_tests/julia.fs) to check USB download performance
 
