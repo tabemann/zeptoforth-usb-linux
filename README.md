@@ -3,4 +3,7 @@ Linux-compatible USB CDC/ACM Serial stack for Zeptoforth on Raspberry RP2040 and
 Includes support for Windows hosts and client applications.
 
 
-Tested with [multiple Linux clients](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/documents/test_matrix.md)  
+Tested with [multiple Linux and other clients](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/documents/test_matrix.md)  
+
+Very good upload performance with Minicom and GTKTerm clients
+
