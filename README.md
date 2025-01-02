@@ -12,4 +12,4 @@ Includes support for Windows hosts and client applications.
 
 * Use zeptocomjs to upload usb files in numerical order, rebooting between each upload.
 
-* Use file `large_upload_file_numbers.fs` to check USB upload performance.
+* Use file `large_upload_file_line_numbers.fs` to check USB upload performance.
