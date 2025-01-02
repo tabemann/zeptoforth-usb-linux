@@ -1,4 +1,6 @@
+ ##
  5.8.3 Bulk Transfer Packet Size Constraints
+ 
  An endpoint for bulk transfers specifies the maximum data payload size that the endpoint can accept from
  or transmit to the bus.  The USB defines the allowable maximum bulk data payload sizes to be only 8, 16,
  32, or 64 bytes for full-speed endpoints and 512 bytes for high-speed endpoints. A low-speed device must
@@ -21,10 +23,14 @@
  reported wMaxPacketSize value.  When a bulk IRP involves more data than can fit in one maximum-sized
  data payload, all data payloads are required to be maximum size except for the last data payload, which will
  contain the remaining data. 
- 
+
+ ##
  A bulk transfer is complete when the endpoint does one of the following:
+ 
  • Has transferred exactly the amount of data expected
- • Transfers a packet with a payload size less than wMaxPacketSize or transfers a zero-length packet
+ 
+ • Transfers a packet with a payload size less than wMaxPacketSize or <b>transfers a zero-length packet</b>
+ ##
  
  When a bulk transfer is complete, the Host Controller retires the current IRP and advances to the next IRP.
  If a data payload is received that is larger than expected, all pending bulk IRPs for that endpoint will be
