@@ -12,6 +12,6 @@ Includes support for Windows hosts and client applications.
 
 * Use zeptocomjs to upload usb files in numerical order, rebooting between each upload.
 
-* Use file `large_upload_file_line_numbers.fs` to check USB upload performance.
+* Use file [`large_upload_file_line_numbers.fs`](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/upload_tests/large_upload_file_line_numbers.fs) to check USB upload performance.
 
 * Upload rate significantly reduced when [writing to flash](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/screenshots/Minicom_cyw43_firmware_flash.png)
