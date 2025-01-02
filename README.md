@@ -3,6 +3,4 @@ Linux-compatible USB CDC/ACM Serial stack for Zeptoforth on Raspberry RP2040 and
 Includes support for Windows hosts and client applications.
 
 
-Tested with multiple Linux clients 
-
-* [Test Results Matrix ](https://github.com/Serialcomms/Serial-Ports-in-VBA-Simple-2022)   (single com port)
+Tested with [multiple Linux clients](https://github.com/Serialcomms/zeptoforth-usb-linux/blob/main/documents/test_matrix.md)  
