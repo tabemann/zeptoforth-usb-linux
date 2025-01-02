@@ -775,7 +775,7 @@ begin-module usb-core
     EP1-to-Host usb-toggle-data-pid   
     tx-empty? if
 
-      \ USB 2.0 section 5.3.2 - end of pipe
+      \ USB 2.0, page 53, section 5.8.3 - bulk transfer complete
       \ (required by some clients)
 
       EP1-to-Host transfer-bytes @ 64 = if
