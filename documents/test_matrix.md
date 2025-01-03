@@ -15,7 +15,7 @@
 | Linux      | tio                  |  ok  |                     |                                         |                      
 | Linux      | cu                   |  ok  |                     | exits on reboot                         |
 | Windows    | PuTTY                |  ok  | [^8]                |                                         |
-| Windows    | CoolTerm             |  ok  | [^4]                | file drag & drop (fast)                 |  
+| Windows    | CoolTerm             |  ok  | [^4] [^10]          | file drag & drop (fast)                 |  
 
 
 [^1]: fast ASCII file upload - Control-A > S > ascii
