@@ -9,7 +9,7 @@
 | Linux      | e4thcom              |  ok  |                     | must set baud to 115200                 |
 | Linux      | bootterm             |  ok  |                     | locates recently inserted tty device    |
 | Linux      | Cutecom              |  ok  | [^4]                |                                         |
-| Linux      | CoolTerm             |  ok  | [^4]                | no file drag & drop                     | 
+| Linux      | CoolTerm             |  ok  | [^4] [^10]          | no file drag & drop                     | 
 | Linux      | GTKTerm              |  ok  | [^5] [^6] [^7] [^8] | reboot recovery (if configured)         | 
 | Linux      | screen               |  ok  |                     |                                         |
 | Linux      | tio                  |  ok  |                     |                                         |                      
@@ -27,3 +27,4 @@
 [^7]: set configuration > autoreconnect
 [^8]: copy & paste to terminal window works
 [^9]: enter `true ack-nak-enabled !` if previously set false
+[^10]: will apply software rate-limiting to emulate baud rate
