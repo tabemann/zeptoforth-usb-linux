@@ -1,4 +1,4 @@
-\ Copyright (c) 2023-2024 Travis Bemann
+\ Copyright (c) 2023-2025 Travis Bemann
 \ Copyright (c) 2025 Serialcomms (GitHub)
 \
 \ Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,6 @@ begin-module usb-core
   task import
   serial import
   interrupt import
-  internal import
 
   usb-constants import
   usb-cdc-buffers import
@@ -69,9 +68,6 @@ begin-module usb-core
 
   \ (Pico - RI) Ring Indicate
   variable RING?
-
-  \ New DTR
-  variable new-dtr?
 
   : usb-core-debug ( xt -- )
     emit-hook @ { saved-emit-hook }
@@ -465,7 +461,7 @@ begin-module usb-core
     EP3-to-Host 10 line-state-notification usb-start-transfer-to-host
   ;
 
-  \ tell host client Pico is online (useful to some clients)
+  \ tell host client that Pico is online (useful to some clients)
   : usb-set-modem-online ( -- )
     true DCD? !   \ data carrier detected
     true DSR? !   \ data set (modem) ready
@@ -473,14 +469,12 @@ begin-module usb-core
     usb-send-line-state-notification
   ;
 
-  \ tell host client Pico is offline ( useful to some clients )
+  \ tell host client that Pico is offline (useful to some clients)
   : usb-set-modem-offline ( -- )
-    DSR? @ if
-      false DCD? !  \ data carrier lost
-      false DSR? !  \ data set (modem) not ready
-      false RING? ! \ Ring Indicate off
-      usb-send-line-state-notification
-    then
+    false DCD? !  \ data carrier lost
+    false DSR? !  \ data set (modem) not ready
+    false RING? ! \ Ring Indicate off
+    usb-send-line-state-notification
   ;
 
   \ Attempt to tell host client Pico is online if it has not already been told
@@ -490,6 +484,7 @@ begin-module usb-core
       usb-set-modem-online
     then
   ;
+
 
   : usb-set-device-configuration ( -- )
     init-usb-function-endpoints
@@ -548,7 +543,7 @@ begin-module usb-core
     EP0-to-Pico 7 usb-receive-data-packet
   ;
 
-  \ DTE signals from host terminal client ( zeptocomjs, Minicom, PuTTY, tio et al )
+  \ DTE signals from host terminal client (zeptocomjs, Minicom, PuTTY, tio et al)
   : usb-class-set-line-control ( -- )
     usb-ack-control-out-request
     usb-setup setup-value h@ BITMAP_DTR and if true DTR? ! else false DTR? ! then
@@ -682,7 +677,6 @@ begin-module usb-core
     USB_SIE_STATUS_BUS_RESET USB_SIE_STATUS !
     0 USB_DEVICE_ADDRESS !
     false usb-device-configured? !
-    true usb-not-ready-set-modem-online? !
   ;
 
   : usb-update-transfer-bytes { endpoint -- }
@@ -790,6 +784,7 @@ begin-module usb-core
         rx-byte write-rx
       then
     loop
+    
     rx-free 63 > if
       EP1-to-Pico 64 usb-receive-data-packet
     else
@@ -862,7 +857,6 @@ begin-module usb-core
     init-port-signals
     reset-usb-hardware
     usb-init-setup-packet
-    true usb-special-enabled !
     0 sof-callback-handler !
     USB_DPRAM_Base dpram-size 0 fill
     init-usb-default-endpoints

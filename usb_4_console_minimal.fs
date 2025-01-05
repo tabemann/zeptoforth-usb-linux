@@ -29,7 +29,7 @@ continue-module usb
 
   console import
 
-  begin-module usb-console-internal
+  begin-module usb-internal
 
     task import
     usb-core import
@@ -42,7 +42,7 @@ continue-module usb
 
     \ Receive core lock
     core-lock-size buffer: rx-core-lock
-
+    
     : start-ep1-data-transfer-to-host ( -- )
       tx-empty? not if
         ep1-start-ring-transfer-to-host
@@ -113,7 +113,6 @@ continue-module usb
 
     \ Initialize USB console
     : init-usb-console ( -- )
-
       tx-core-lock init-core-lock
       rx-core-lock init-core-lock
       
@@ -137,20 +136,18 @@ continue-module usb
   : with-usb-input ( xt -- )
     ['] usb-key ['] usb-key? rot with-input
   ;
-  
+
   \ Set the current output to usb within an xt
   : with-usb-output ( xt -- )
     ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-output
   ;
-  
+
   \ Set the current error output to usb within an xt
   : with-usb-error-output ( xt -- )
     ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-error-output
   ;
-  
-end-module
 
-\ : turnkey cr ." USB Serial Console Turnkey Test " cr ; \ not working here - ask Travis
+end-module
 
 compile-to-ram
 

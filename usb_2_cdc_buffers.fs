@@ -35,11 +35,10 @@ compile-to-flash
 
 begin-module usb-cdc-buffers
 
-\ Constant transmit ring buffer size - must be power-of-two value
+\ Transmit ring-buffer size - must be power-of-two value
 9 bit constant tx-buffer-size
 
-\ Constant receive ring buffer size  - must be power-of-two value
-
+\ Receive ring-buffer size  - must be power-of-two value
 8 bit constant rx-buffer-size
 
 \ RAM variable for rx buffer read-index
