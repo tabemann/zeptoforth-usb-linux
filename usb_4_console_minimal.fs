@@ -1,4 +1,4 @@
-\ Copyright (c) 2023-2024 Travis Bemann
+\ Copyright (c) 2023-2025 Travis Bemann
 \ Copyright (c) 2025 Serialcomms (GitHub)
 \
 \ Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,192 +20,134 @@
 \ SOFTWARE.
 
 \ IMPORTANT - many terminal clients use the same control keys as zeptoforth.
-\ use set-usb-control-keys-off to allow use of more terminal clients.
+\ use false usb::usb-special-enabled ! to allow use of more terminal clients.
 \ Note that some clients may hang if Pico reboots and does not recover.
 
 compile-to-flash
 
-begin-module usb-console
+continue-module usb
 
-console import
+  console import
 
-begin-module usb-console-internal
+  begin-module usb-console-internal
 
-task import
-usb-core import
-usb-constants import
-usb-cdc-buffers import
+    task import
+    usb-core import
+    usb-constants import
+    usb-cdc-buffers import
+    core-lock import
 
-variable usb-control-keys-enabled?
+    \ Transmit core lock
+    core-lock-size buffer: tx-core-lock
 
-: console-control-c-handler ( -- )
+    \ Receive core lock
+    core-lock-size buffer: rx-core-lock
 
-  usb-control-keys-enabled? @ if
+    : start-ep1-data-transfer-to-host ( -- )
+      tx-empty? not if
+        ep1-start-ring-transfer-to-host
+      then
+    ;
 
-   [: cr ." Control-C pressed - rebooting" cr ;] usb-core-debug
+    : start-ep1-data-transfer-to-pico ( -- )
+      rx-free 63 > if
+        EP1-to-Pico 64 usb-receive-data-packet
+      then
+    ;
 
-   usb-set-modem-offline 
-   20 ms
-   usb-remove-device
-   20 ms
-   reboot
+    \ USB Start of Frame Interrupts, every 1 ms
+    : handle-sof-from-host ( -- )
+      EP1-to-Pico endpoint-busy? @ not if start-ep1-data-transfer-to-pico then
+      EP1-to-Host endpoint-busy? @ not if start-ep1-data-transfer-to-host then
+    ;
 
-  else
-   \ ignore control-c and carry on receiving data
-   false EP1-to-Pico endpoint-busy? !
-  then
-;
+    \ Byte available to read from rx ring buffer ?
+    : usb-key? ( -- key? )
+      rx-empty? not
+    ;
 
-: console-control-t-handler ( -- )
+    \ Client connected and tx ring buffer capacity to host available ?
+    : usb-emit? ( -- emit? )
+      usb-device-configured? @ usb-dtr? and tx-full? not and
+    ;
 
-  usb-control-keys-enabled? @ if
+    : usb-emit ( c -- )
+      begin
+        [:
+          [:
+            usb-emit? dup if usb-try-set-modem-online swap write-tx then
+          ;] critical
+        ;] tx-core-lock with-core-lock
+        dup not if pause-reschedule-last then
+      until
+    ;
 
-   [: cr ." Control-T pressed- attention" cr ;] usb-core-debug
+    : usb-key ( -- c)
+      begin
+        [:
+          [:
+            usb-key? dup if usb-try-set-modem-online read-rx swap then
+          ;] critical
+        ;] rx-core-lock with-core-lock
+        dup not if pause-reschedule-last then
+      until
+    ;
 
-   attention? @ if
-     [: attention-hook @ execute ;] try    
-     ?raise
-   else
-     [: attention-start-hook @ execute ;] try  \ not working - ask Travis
-     ?raise
-    then
-   else
-  then
-  \ continue data reception
-  false EP1-to-Pico endpoint-busy? !
-;
+    : usb-flush-console ( -- )
+      begin pause-reschedule-last tx-empty? until
+    ;
 
-: start-ep1-data-transfer-to-host ( -- )
-  tx-empty? not if
-   ep1-start-ring-transfer-to-host
-  then
-;
+    \ Switch to USB console
+    : switch-to-usb-console
 
-: start-ep1-data-transfer-to-pico ( -- )
-  rx-free 63 > if
-   EP1-to-Pico 64 usb-receive-data-packet
-  then
-;
+      ['] usb-key? key?-hook !
+      ['] usb-key key-hook !
+      ['] usb-emit? emit?-hook !
+      ['] usb-emit emit-hook !
 
-\ USB Start of Frame Interrupts, every 1 ms
-: handle-sof-from-host ( -- )
-  EP1-to-Pico endpoint-busy? @ not if start-ep1-data-transfer-to-pico then
-  EP1-to-Host endpoint-busy? @ not if start-ep1-data-transfer-to-host then
-;
+      ['] usb-emit? error-emit?-hook !
+      ['] usb-emit error-emit-hook !
+      ['] usb-flush-console flush-console-hook !
+      ['] usb-flush-console error-flush-console-hook !
+    ;
 
-\ Byte available to read from rx ring buffer ?
-: usb-key? ( -- key? )
-  rx-empty? not
-;
+    \ Initialize USB console
+    : init-usb-console ( -- )
 
-\ Client connected and tx ring buffer capacity to host available ?
-: usb-emit? ( -- emit? )
-   usb-dtr? tx-full? not and
-;
+      tx-core-lock init-core-lock
+      rx-core-lock init-core-lock
+      
+      init-usb
+      init-tx-ring
+      init-rx-ring
 
-: usb-emit ( c -- )
-  tx-full? if
-   begin pause-reschedule-last tx-full? not until
-  then
-  write-tx
-;
+      usb-insert-device
+      ['] handle-sof-from-host sof-callback-handler !
+      switch-to-usb-console
+    ;
 
-: usb-key ( -- c)
-  begin
-  rx-empty? if
-   pause-reschedule-last false
-  else
-   read-rx true
-  then
-  until
-;
+    initializer init-usb-console
 
-: usb-flush-console ( -- )
-  begin pause-reschedule-last tx-empty? until
-;
+  end-module> import
 
-\ Switch to USB console
-: switch-to-usb-console
+  \ Select the USB serial console
+  : usb-console ( -- ) switch-to-usb-console ;
 
-  ['] usb-key? key?-hook !
-  ['] usb-key key-hook !
-  ['] usb-emit? emit?-hook !
-  ['] usb-emit emit-hook !
-
-  ['] usb-emit? error-emit?-hook !
-  ['] usb-emit error-emit-hook !
-  ['] usb-flush-console flush-console-hook !
-  ['] usb-flush-console error-flush-console-hook !
-;
-
-\ Set the curent input to usb within an xt
-: with-usb-input ( xt -- )
-  ['] usb-key ['] usb-key? rot with-input
-;
-
-\ Set the current output to usb within an xt
-: with-usb-output ( xt -- )
-  ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-output
-;
-
-\ Set the current error output to usb within an xt
-: with-usb-error-output ( xt -- )
-  ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-error-output
-;
-
-: usb-wait-for-device-configured ( -- )
-
-  cr ." Waiting for Host to set USB Device Configuration ... " cr
-
-  begin pause-reschedule-last usb-device-configured? @ not until
-
-  cr
-
-  ." --------------------------------------------------------- " cr
-  ." USB Device Configured, Starting SOF callback handler now " cr
-
-  ['] handle-sof-from-host sof-callback-handler !
-  ['] console-control-c-handler ep1-control-c-handler !
-  ['] console-control-t-handler ep1-control-t-handler !
-;
-
-: usb-wait-for-client-connect ( -- )
-
-  cr ." Waiting for Client to Connect (DTR signal from Host) ... " cr
-
-  begin pause-reschedule-last usb-dtr? until
-
-  cr
-
-  ." --------------------------------------------------------- " cr
-  ." Client Connected, starting USB CDC/ACM Serial Console now"  cr
-
-;
-
-\ Initialize USB console
-: init-usb-console ( -- )
-
-  init-usb
-  init-tx-ring
-  init-rx-ring
-
-  usb-insert-device
-  usb-wait-for-device-configured
-  usb-wait-for-client-connect
-  usb-set-modem-online
-  switch-to-usb-console
-  true usb-control-keys-enabled? !
-;
-
-initializer init-usb-console
-
-end-module> import
-
-\ Select the USB serial console
-: usb-console ( -- ) switch-to-usb-console ;
-: set-usb-control-keys-on ( -- ) true usb-control-keys-enabled? ! ;
-: set-usb-control-keys-off ( -- ) false usb-control-keys-enabled? ! ;
-
+  \ Set the curent input to usb within an xt
+  : with-usb-input ( xt -- )
+    ['] usb-key ['] usb-key? rot with-input
+  ;
+  
+  \ Set the current output to usb within an xt
+  : with-usb-output ( xt -- )
+    ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-output
+  ;
+  
+  \ Set the current error output to usb within an xt
+  : with-usb-error-output ( xt -- )
+    ['] usb-emit ['] usb-emit? rot ['] usb-flush-console swap with-error-output
+  ;
+  
 end-module
 
 \ : turnkey cr ." USB Serial Console Turnkey Test " cr ; \ not working here - ask Travis
